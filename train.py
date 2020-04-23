@@ -10,7 +10,8 @@ AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 VOC_2007_images_dir = 'dataset/VOCdevkit/VOC2007/JPEGImages/'
 VOC_2007_annotations_dir = 'dataset/VOCdevkit/VOC2007/Annotations/'
-VOC_2007_train_image_set_filename = 'dataset/VOCdevkit/VOC2007/ImageSets/Main/test.txt'
+VOC_2007_train_image_set_filename = 'dataset/VOCdevkit/VOC2007/ImageSets/Main/train.txt'
+VOC_2007_valid_image_set_filename = 'dataset/VOCdevkit/VOC2007/ImageSets/Main/val.txt'
 
 classes = ['background',
            'aeroplane', 'bicycle', 'bird', 'boat',
@@ -19,7 +20,7 @@ classes = ['background',
            'horse', 'motorbike', 'person', 'pottedplant',
            'sheep', 'sofa', 'train', 'tvmonitor']
 
-EPOCHS = 1
+EPOCHS = 1000
 BATCH_SIZE = 32
 INPUT_IMG_SIZE = (300, 300)
 ASPECT_RATIOS = [[1.0, 2.0, 0.5],
@@ -66,7 +67,7 @@ def main():
     # print(list(train_ds.take(1).as_numpy_iterator()))
 
     valid_dataset = DataGenerator(ssd_encoder)
-    valid_dataset.parse(VOC_2007_images_dir, VOC_2007_annotations_dir, VOC_2007_train_image_set_filename, classes)
+    valid_dataset.parse(VOC_2007_images_dir, VOC_2007_annotations_dir, VOC_2007_valid_image_set_filename, classes)
     valid_steps_per_epoch = valid_dataset.sample_count() // BATCH_SIZE
     valid_ds = tf.data.Dataset.from_generator(
         valid_dataset.generate,
