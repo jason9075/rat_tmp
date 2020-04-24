@@ -82,9 +82,9 @@ def main():
     valid_ds = valid_ds.batch(BATCH_SIZE)
     valid_ds = valid_ds.prefetch(buffer_size=AUTOTUNE)
 
-    sgd = tf.keras.optimizers.SGD(lr=0.001, momentum=0.9, decay=0.0, nesterov=False)
+    adam = tf.keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
     ssd_loss = SSDLoss(neg_pos_ratio=3, alpha=1.0)
-    model.compile(optimizer=sgd, loss=ssd_loss.compute_loss)
+    model.compile(optimizer=adam, loss=ssd_loss.compute_loss)
 
     callbacks = [
         tf.keras.callbacks.TerminateOnNaN(),
