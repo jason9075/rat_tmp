@@ -10,7 +10,7 @@ classes = ['background',
            'horse', 'motorbike', 'person', 'pottedplant',
            'sheep', 'sofa', 'train', 'tvmonitor']
 
-MODEL_PATH = 'checkpoints/39-9.46.h5'
+MODEL_PATH = 'checkpoints/10-17.06.h5'
 
 BATCH_SIZE = 32
 INPUT_IMG_SIZE = (300, 300)
@@ -41,7 +41,7 @@ def main():
 
     for res in result:
         if res[0] == 0: continue  # background
-        if 0.5 < res[1]: continue  # score
+        if res[1] < 0.5: continue  # score
 
         min_x, min_y, max_x, max_y = res[2:]
         cv2.rectangle(origin_img, (int(min_x * w), int(min_y * h)), (int(max_x * w), int(max_y * h)), (0, 255, 0), 2)

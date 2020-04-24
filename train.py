@@ -6,6 +6,7 @@ from helper.loss import SSDLoss
 from helper.preprocessing import path_to_image_aug, path_to_image
 from network.mobilenetv2 import mobilenet_v2
 
+tf.get_logger().setLevel("ERROR")
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 VOC_2007_images_dir = 'dataset/VOCdevkit/VOC2007/JPEGImages/'
