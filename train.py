@@ -3,8 +3,8 @@ import tensorflow as tf
 from generator.data_generator import DataGenerator
 from helper.box_encoder import SSDEncoder
 from helper.loss import SSDLoss
-from network.mobilenetv2 import mobilenet_v2
 from helper.preprocessing import path_to_image_aug, path_to_image
+from network.mobilenetv2 import mobilenet_v2
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
@@ -52,6 +52,30 @@ def main():
 
     ssd_encoder = SSDEncoder(INPUT_IMG_SIZE, ASPECT_RATIOS, SCALES_PASCAL,
                              len(classes), predictor_sizes=predictor_sizes)
+    #####
+    # with open('dataset/000026.xml') as f:
+    #     from bs4 import BeautifulSoup
+    #     soup = BeautifulSoup(f, 'lxml')
+    #
+    # boxes = []
+    # objects = soup.find_all('object')
+    # height = float(soup.find('height').text)
+    # width = float(soup.find('width').text)
+    #
+    # for obj in objects:
+    #     class_name = obj.find('name', recursive=False).text
+    #     class_id = classes.index(class_name)
+    #     bndbox = obj.find('bndbox', recursive=False)
+    #     xmin = float(bndbox.xmin.text) / width
+    #     ymin = float(bndbox.ymin.text) / height
+    #     xmax = float(bndbox.xmax.text) / width
+    #     ymax = float(bndbox.ymax.text) / height
+    #
+    #     boxes.append([class_id, xmin, ymin, xmax, ymax])
+    #
+    # ssd_encoder.encode_annotation(boxes)
+    # exit(0)
+
     train_dataset = DataGenerator(ssd_encoder)
     train_dataset.parse(VOC_2007_images_dir, VOC_2007_annotations_dir, VOC_2007_train_image_set_filename, classes)
     train_steps_per_epoch = train_dataset.sample_count() // BATCH_SIZE

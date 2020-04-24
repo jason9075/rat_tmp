@@ -23,16 +23,19 @@ class DataGenerator:
                 soup = BeautifulSoup(f, 'lxml')
 
             boxes = []
+            height = float(soup.find('height').text)
+            width = float(soup.find('width').text)
             objects = soup.find_all('object')
 
             for obj in objects:
                 class_name = obj.find('name', recursive=False).text
                 class_id = category_name.index(class_name)
                 bndbox = obj.find('bndbox', recursive=False)
-                xmin = int(bndbox.xmin.text)
-                ymin = int(bndbox.ymin.text)
-                xmax = int(bndbox.xmax.text)
-                ymax = int(bndbox.ymax.text)
+                # 因訓練圖片長寬不一，所以都用比例表示
+                xmin = float(bndbox.xmin.text) / width
+                ymin = float(bndbox.ymin.text) / height
+                xmax = float(bndbox.xmax.text) / width
+                ymax = float(bndbox.ymax.text) / height
 
                 boxes.append([class_id, xmin, ymin, xmax, ymax])
 

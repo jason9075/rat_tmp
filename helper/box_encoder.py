@@ -41,19 +41,17 @@ class SSDEncoder:
         # cx(gt) - cx(anchor), cy(gt) - cy(anchor)
         y_encoded[:, [-4, -3]] -= self.boxes_list[:, [-4, -3]]
         # (cx(gt) - cx(anchor)) / w(anchor) / cx_variance, (cy(gt) - cy(anchor)) / h(anchor) / cy_variance
-        y_encoded[:, [-4, -3]] /= self.boxes_list[:, [-2, -1]] * [[xy_var, xy_var]]
+        y_encoded[:, [-4, -3]] /= self.boxes_list[:, [-2, -1]] * xy_var
         # w(gt) / w(anchor), h(gt) / h(anchor)
         y_encoded[:, [-2, -1]] /= self.boxes_list[:, [-2, -1]]
         # ln(w(gt) / w(anchor)) / w_variance, ln(h(gt) / h(anchor)) / h_variance (ln == natural logarithm)
-        y_encoded[:, [-2, -1]] = np.log(y_encoded[:, [-2, -1]]) / [[wh_var, wh_var]]
+        y_encoded[:, [-2, -1]] = np.log(y_encoded[:, [-2, -1]]) / wh_var
 
         return y_encoded
 
-    def matching_gt_to_anchor(self, anno, class_id, class_vectors, xmax, xmin, y_encoded, ymax, ymin):
+    @staticmethod
+    def matching_gt_to_anchor(anno, class_id, class_vectors, xmax, xmin, y_encoded, ymax, ymin):
         labels = anno.astype(np.float)
-        # 因訓練圖片長寬不一，所以都用比例表示
-        labels[:, [ymin, ymax]] /= self.img_height
-        labels[:, [xmin, xmax]] /= self.img_width
         similarities = iou(labels[:, [xmin, ymin, xmax, ymax]], y_encoded[:, -4:])
         labels = corners2centroids(labels, start_index=xmin)
         classes_one_hot = class_vectors[labels[:, class_id].astype(np.int)]
