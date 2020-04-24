@@ -115,3 +115,49 @@ def match_multi(weight_matrix, threshold):
     gt_indices_thresh_met = ground_truth_indices[anchor_indices_thresh_met]
 
     return gt_indices_thresh_met, anchor_indices_thresh_met
+
+
+def generate_boxes(img_hw, predictor_sizes, aspect_ratios, scales, offset_height=0.5, offset_width=0.5):
+    size = min(img_hw)
+
+    boxes_tensor = []
+    for idx, (feature_map_height, feature_map_width) in enumerate(predictor_sizes):
+        step_height = img_hw[0] / feature_map_height
+        step_width = img_hw[1] / feature_map_width
+
+        cy = np.linspace(offset_height * step_height, (offset_height + feature_map_height - 1) * step_height,
+                         feature_map_height)
+        cx = np.linspace(offset_width * step_width, (offset_width + feature_map_width - 1) * step_width,
+                         feature_map_width)
+        cx_grid, cy_grid = np.meshgrid(cx, cy)
+        cx_grid = np.expand_dims(cx_grid, -1)
+        cy_grid = np.expand_dims(cy_grid, -1)
+
+        wh_list = []
+        for ar in aspect_ratios[idx]:
+            if ar == 1:
+                box_height = box_width = scales[idx] * size
+                wh_list.append((box_width, box_height))
+                box_height = box_width = np.sqrt(scales[idx] * scales[idx + 1]) * size
+                wh_list.append((box_width, box_height))
+            else:
+                box_height = scales[idx] * size / np.sqrt(ar)
+                box_width = scales[idx] * size * np.sqrt(ar)
+                wh_list.append((box_width, box_height))
+        wh_list = np.array(wh_list)
+
+        n_boxes = wh_list.shape[0]
+        boxes_tensor_per_layer = np.zeros((feature_map_height, feature_map_width, n_boxes, 4))
+        boxes_tensor_per_layer[:, :, :, 0] = np.tile(cx_grid, (1, 1, n_boxes))  # Set cx
+        boxes_tensor_per_layer[:, :, :, 1] = np.tile(cy_grid, (1, 1, n_boxes))  # Set cy
+        boxes_tensor_per_layer[:, :, :, 2] = wh_list[:, 0]  # Set w
+        boxes_tensor_per_layer[:, :, :, 3] = wh_list[:, 1]  # Set h
+
+        boxes_tensor_per_layer[:, :, :, [1, 3]] /= img_hw[0]  # divide image height
+        boxes_tensor_per_layer[:, :, :, [0, 2]] /= img_hw[1]  # divide image weight
+
+        boxes_tensor.append(np.reshape(boxes_tensor_per_layer, (-1, 4)))
+
+    boxes_tensor = np.concatenate(boxes_tensor, axis=0)
+
+    return boxes_tensor

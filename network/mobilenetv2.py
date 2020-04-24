@@ -1,15 +1,15 @@
 import tensorflow as tf
 
+from helper.box_decoder import DecodePrediction
 
-def mobilenet_v2(input_shape, n_classes, aspect_ratios, model_type):
+
+def mobilenet_v2(input_shape, n_classes, aspect_ratios, layer_depths, scales, model_type):
     boxes_per_layer = []
     for ar in aspect_ratios:
         if 1 in ar:
             boxes_per_layer.append(len(ar) + 1)
         else:
             boxes_per_layer.append(len(ar))
-
-    layer_depths = [-1, -1, 512, 256, 256, 128]
 
     full_mobile_net_v2 = tf.keras.applications.MobileNetV2(include_top=False,
                                                            input_shape=(input_shape[0], input_shape[1], 3))
@@ -34,13 +34,32 @@ def mobilenet_v2(input_shape, n_classes, aspect_ratios, model_type):
 
     locations = tf.keras.layers.Concatenate(axis=1, name='locations')([loc_1, loc_2, loc_3, loc_4, loc_5, loc_6])
 
-    predictions = tf.keras.layers.Concatenate(axis=2, name='predictions')([confidence, locations, locations])
+    predictions = tf.keras.layers.Concatenate(axis=2, name='predictions')([confidence, locations])
 
-    model = tf.keras.Model(inputs=full_mobile_net_v2.inputs, outputs=[predictions])
-    # if model_type == 'train':
-    #     model = tf.keras.Model(inputs=full_mobile_net_v2.inputs, outputs=[confidence, locations])
-    # else:
-    #     model = tf.keras.Model(inputs=full_mobile_net_v2.inputs, outputs=[confidence, locations])
+    if model_type == 'train':
+        model = tf.keras.Model(inputs=full_mobile_net_v2.inputs, outputs=[predictions])
+    elif model_type == 'inference':
+        predictor_sizes = [feature_map_1.shape[1:3],  # 19x19
+                           feature_map_2.shape[1:3],  # 10x10
+                           feature_map_3.shape[1:3],  # 5x5
+                           feature_map_4.shape[1:3],  # 3x3
+                           feature_map_5.shape[1:3],  # 2x2
+                           feature_map_6.shape[1:3]]  # 1x1
+        decoded_predictions = DecodePrediction(input_shape,
+                                               predictor_sizes,
+                                               aspect_ratios,
+                                               scales)(predictions)
+                                               # confidence_thresh=confidence_thresh,
+                                               # iou_threshold=iou_threshold,
+                                               # top_k=top_k,
+                                               # nms_max_output_size=nms_max_output_size,
+                                               # normalize_coords=normalize_coords,
+                                               # img_height=img_height,
+                                               # img_width=img_width,
+                                               # name='decoded_predictions')(predictions)
+        model = tf.keras.Model(inputs=full_mobile_net_v2.inputs, outputs=[decoded_predictions])
+    else:
+        raise RuntimeError('model_type error.')
 
     return model
 
