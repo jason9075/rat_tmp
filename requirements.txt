@@ -1,4 +1,4 @@
 beautifulsoup4==4.8.2
-tensorflow==2.5.3
+tensorflow==2.11.1
 sklearn
 lxml==4.6.5
